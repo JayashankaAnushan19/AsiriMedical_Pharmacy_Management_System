@@ -105,8 +105,8 @@ On PHP 8.1+, add `mysqli_report(MYSQLI_REPORT_OFF);` to the top of `model/db_con
 
 **Priority**
 - [x] One-click launcher that runs on PHP 8 with no code changes
-- [ ] Customer login: check credentials against the database
-- [ ] Fix the broken "Visit Us Today!" link on the landing page
+- [x] Fix the broken "Visit Us Today!" link on the landing page (now opens the shop)
+- [ ] Customer accounts: the login and sign-up pages are mock-ups with no customer table yet. The shop works as guest checkout.
 - [ ] Product image upload: real size and type validation, and allow updates without a new image
 
 **Security** (needed before any online deployment)
