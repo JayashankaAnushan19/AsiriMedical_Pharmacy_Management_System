@@ -19,6 +19,12 @@ if not exist "%PHP%" (
     pause & exit /b 1
 )
 
+rem ---- 0. Local config ----
+if not exist ".env" (
+    copy /y ".env.example" ".env" >nul
+    echo Created .env from .env.example
+)
+
 rem ---- 1. MySQL ----
 "%MYSQLADMIN%" -uroot --silent ping >nul 2>&1
 if errorlevel 1 (
@@ -46,13 +52,16 @@ if errorlevel 1 (
     echo Database %DB% already exists - using it.
 )
 
-rem ---- 3. Web server (XAMPP's PHP, serving this folder) ----
+rem ---- 3. Migrations (schema upgrades) ----
+"%PHP%" model\migrate.php
+if errorlevel 1 ( echo [ERROR] Migration failed. & pause & exit /b 1 )
+
+rem ---- 4. Web server (XAMPP's PHP, serving this folder) ----
 if not exist "_launcher\logs" mkdir "_launcher\logs"
 echo.
 echo ============================================================
 echo   Open:   http://localhost:%PORT%/
-echo   Admin:  http://localhost:%PORT%/view/AdminUser/Adminlogin.php
-echo           user: admin   pass: 1234
+echo   Admin:  http://localhost:%PORT%/admin.html
 echo   PHP errors log: _launcher\logs\php_errors.log
 echo   Close this window (or Ctrl+C) to stop the website.
 echo   Run STOP.bat to also stop MySQL.
@@ -61,11 +70,12 @@ echo.
 start "" "http://localhost:%PORT%/"
 
 "%PHP%" -S localhost:%PORT% -t "%~dp0." ^
-  -d "auto_prepend_file=%~dp0_launcher\prepend.php" ^
   -d output_buffering=4096 ^
-  -d display_errors=Off ^
+  -d upload_max_filesize=4M ^
+  -d post_max_size=8M ^
   -d log_errors=On ^
   -d "error_log=%~dp0_launcher\logs\php_errors.log" ^
-  -d "session.save_path=%XAMPP%\tmp"
+  -d "session.save_path=%XAMPP%\tmp" ^
+  "%~dp0_launcher\router.php"
 
 pause

@@ -1,0 +1,44 @@
+# ===== Asiri Medical PMS – Apache rules (shared hosting / XAMPP Apache) =====
+
+Options -Indexes
+DirectoryIndex index.html index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Allow only the migration runner inside model/ (it is token-protected)
+    RewriteRule ^model/migrate\.php$ - [L]
+
+    # Block internal folders and files
+    RewriteRule ^(model|_launcher|docker|\.git)(/|$) - [F,L]
+    RewriteRule (^|/)\. - [F,L]
+    RewriteRule \.(sql|bak|bac|log|md|rar|zip|ini|sh|bat|yml|yaml|lock|dist|example)$ - [F,L]
+    RewriteRule (^|/)(Dockerfile|docker-compose\.yml|composer\.(json|lock))$ - [F,L]
+</IfModule>
+
+# Fallback when mod_rewrite is not available
+<FilesMatch "(^\.|\.(sql|bak|bac|log|md|rar|zip|ini|sh|bat|yml|yaml|example)$)">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
+
+# PHP settings when PHP runs as an Apache module (PHP-FPM hosts read .user.ini instead)
+<IfModule mod_php.c>
+    php_value output_buffering 4096
+    php_flag display_errors off
+    php_value upload_max_filesize 4M
+    php_value post_max_size 8M
+</IfModule>
+<IfModule mod_php7.c>
+    php_value output_buffering 4096
+    php_flag display_errors off
+</IfModule>
+
+ErrorDocument 403 "Forbidden"
+ErrorDocument 404 "Page not found"

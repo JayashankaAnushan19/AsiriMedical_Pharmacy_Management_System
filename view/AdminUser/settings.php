@@ -1,11 +1,11 @@
-<?php 
-include('../../control/AdminUser/HeadAndFooter/header.php'); 
-include('../../model/db_connection.php'); 
+<?php
+include('../../control/AdminUser/HeadAndFooter/header.php');
+include('../../model/db_connection.php');
 ?>
 
 
 <div class="container-fluid">
-	<div class="card shadow"> 
+	<div class="card shadow">
 		<div class="card-header">
 			<div class="row">
 				<div class="col">
@@ -15,15 +15,14 @@ include('../../model/db_connection.php');
 			<div class="row">
 				<div class="col">
 					<form action="../../control/AdminUser/dbBackup.php" method="post">
-						Backup Database : 
+						<?= csrf_field() ?>
+						Backup Database :
 						<input type="submit" class="btn btn-primary btn-sm" value="Backup Database" name="DoBackup" id="DoBackup" />
 					</form>
 				</div>
 				<div class="col">
-					<form action="../../control/AdminUser/dbBackup.php" method="post">
-						Restore Database : 
-						<input type="submit" class="btn btn-primary btn-sm" value="Restore Database" name="" id="" />
-					</form>
+					Restore Database :
+					<small class="text-muted">import the downloaded .sql file with phpMyAdmin (or <code>mysql db_pms &lt; backup.sql</code>).</small>
 				</div>
 			</div>
 		</div>

@@ -1,6 +1,6 @@
 <?php
+require_once __DIR__ . '/../../model/auth.php';
 
-session_destroy();
-header("location: ../../view/AdminUser/Adminlogin.php");
-
-?>
+logout_staff();
+header('Location: Adminlogin.php');
+exit;

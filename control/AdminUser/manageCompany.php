@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../../model/auth.php';
+require_staff();
 include('../../model/db_connection.php'); 
 
 if (isset($_POST["btnAdd"])) {

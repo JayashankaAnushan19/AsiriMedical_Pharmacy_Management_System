@@ -1,4 +1,6 @@
-<?php 
+<?php
+require_once __DIR__ . '/../../model/auth.php';
+require_staff(); 
 include('../../model/db_connection.php'); 
 ?>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/paper-css/0.3.0/paper.css">

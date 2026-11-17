@@ -1,6 +1,33 @@
-<?php 
-session_start();
-?>   
+<?php
+require_once __DIR__ . '/../../model/auth.php';
+
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['btnLog'])) {
+    $unam = trim((string) ($_POST['uname'] ?? ''));
+    $pass = (string) ($_POST['password'] ?? '');
+
+    if (!csrf_valid()) {
+        $error = 'Your session expired. Please try again.';
+    } elseif ($unam === '') {
+        $error = 'Enter Username.';
+    } elseif ($pass === '') {
+        $error = 'Enter Password.';
+    } elseif ($user = attempt_staff_login($unam, $pass)) {
+        header('Location: ' . home_for_role((int) $user['user_Role']));
+        exit;
+    } else {
+        usleep(random_int(300000, 700000)); // slow down password guessing
+        $error = 'Password and Username error !!';
+    }
+} elseif (is_logged_in()) {
+    header('Location: ' . home_for_role(current_role()));
+    exit;
+}
+?>
+<!DOCTYPE html>
+<html>
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
 <title>PMS-Sotuion</title>
@@ -9,10 +36,12 @@ session_start();
 <link rel="stylesheet" href="../../assets/fonts/fontawesome-all.min.css">
 <link rel="stylesheet" href="../../assets/fonts/ionicons.min.css">
 <link rel="stylesheet" href="../../assets/css/Login-Form-Dark.css">
-
+</head>
+<body>
 <div>
     <div class="login-dark">
-        <form action="#" method="post">
+        <form action="Adminlogin.php" method="post">
+            <?= csrf_field() ?>
             <center>
                 <a href="../../index.html">
                     <img src="../../assets/img/pmsLogo.png" height="150px" style="margin-top: -20px">
@@ -20,104 +49,16 @@ session_start();
             </center>
             <h3><center style="margin-top: 10px">Asiri Medical <br><br> <h6 style="margin-top: -20px"><i>Pharmacy Management System</i></h6></center></h3>
             <hr style="background-color: white;">
-            <!-- <h6><center>Internal User Login</center></h6> -->
-            <div ><label id="ErrMsg" style="color: red;"></label></div>
-            <!-- <div class="illustration"><i class="icon ion-ios-locked-outline"></i></div> -->
-            <div class="form-group"><input class="form-control" type="text" name="uname" placeholder="Username"></div>
-            <div class="form-group"><input class="form-control" type="password" name="password" placeholder="Password"></div>
+            <div><label id="ErrMsg" style="color: red;"><?= e($error) ?></label></div>
+            <div class="form-group"><input class="form-control" type="text" name="uname" placeholder="Username" value="<?= e($_POST['uname'] ?? '') ?>" autocomplete="username" autofocus></div>
+            <div class="form-group"><input class="form-control" type="password" name="password" placeholder="Password" autocomplete="current-password"></div>
             <div class="form-group">
                 <button class="btn btn-primary btn-block" name="btnLog" type="submit">Log In</button>
             </div>
         </form>
-
     </div>
     <script src="../../assets/js/jquery.min.js"></script>
     <script src="../../assets/bootstrap/js/bootstrap.min.js"></script>
-
-    <?php 
-
-    include('../../model/db_connection.php'); 
-
-    
-
-    if (isset($_POST["btnLog"]))
-    {
-        $Connection = setConnection();
-        
-
-        $unam = $_POST['uname'];
-        $pass = $_POST['password'];
-
-        if($unam == ""){
-            ?>
-            <script type="text/javascript">
-                document.getElementById('ErrMsg').innerHTML = "Enter Username.";
-                // alert("Enter Username.");
-            </script>
-            <?php
-        }
-        else if($pass == ""){
-            ?>
-            <script type="text/javascript">
-                document.getElementById('ErrMsg').innerHTML = "Enter Username Again and Enter valid Password.";
-                // alert("Enter Password.");
-            </script>
-            <?php
-        }
-        else{
-
-            $myCommand = "SELECT * FROM `tb_adminuser` WHERE `user_Uname`='".$unam."' AND `user_Password`='".$pass."' LIMIT 1"; //SQL Query
-            $RecoResult=mysqli_query($Connection, $myCommand); //Run SQL Query
-            
-            if (mysqli_num_rows($RecoResult)==1) {
-
-                $record = mysqli_fetch_assoc($RecoResult);
-
-                // session_destroy();
-
-                $_SESSION["UserId"] = $record['user_ID'];
-                $_SESSION["UserName"] = $record['user_Name'];
-                $_SESSION["UserLevel"] = $record['user_Role'];
-
-                $User = $_SESSION["UserId"];
-
-                $Date = date("Y/m/d");
-
-                try {
-                    $Connection = setConnection();
-
-                    $invoiceAddCmd = "INSERT INTO `tb_login_history`(`login_History_User_ID`, `login_History_LogDate`, `tb_user_user_ID`) VALUES ('$User','$Date','$User')";
-
-                    mysqli_query($Connection, $invoiceAddCmd);
-
-                } catch (Exception $e) {
-
-                }
-
-
-                if ($_SESSION["UserLevel"] == 0 || $_SESSION["UserLevel"] == 1) {
-                    header("location: home.php");
-                }
-                if ($_SESSION["UserLevel"] == 2 || $_SESSION["UserLevel"] == 3) {
-                    header("location: lawLevelHome.php");
-                }
-
-                
-            }
-            else {
-                ?>
-                <script type="text/javascript">
-                    document.getElementById('ErrMsg').innerHTML = "Password and Username error !!";
-                    // alert("Enter Password.");
-                </script>
-                <?php
-                // echo "<script type='text/javascript'>alert('Password and Username error !!')</script>";
-            }
-        }
-    } 
-    else{
-        session_destroy();
-    }
-    ?>
-
 </div>
+</body>
+</html>

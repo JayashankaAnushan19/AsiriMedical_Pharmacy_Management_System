@@ -1,101 +1,46 @@
-<?php 
-//dbBackup.php
+<?php
+/**
+ * Download a full SQL backup of the database.
+ * Streams straight to the browser – nothing is written inside the web root.
+ */
+require_once __DIR__ . '/../../model/auth.php';
+require_staff();
 
-if (isset($_POST['DoBackup'])) {
-
-	echo "<script> alert('Got this'); </script>";
-	// Database configuration
-	$host = "127.0.0.1"; //127.0.0.1
-	$username = "root";
-	$password = "";
-	$database_name = "db_pms";
-
-	// Get connection object and set the charset
-	$conn = mysqli_connect($host, $username, $password, $database_name);
-	$conn->set_charset("utf8");
-
-
-	// Get All Table Names From the Database
-	$tables = array();
-	$sql = "SHOW TABLES";
-	$result = mysqli_query($conn, $sql);
-
-	while ($row = mysqli_fetch_row($result)) {
-		$tables[] = $row[0];
-	}
-
-	$sqlScript = "";
-	foreach ($tables as $table) {
-
-    	// Prepare SQLscript for creating table structure
-		$query = "SHOW CREATE TABLE $table";
-		$result = mysqli_query($conn, $query);
-		$row = mysqli_fetch_row($result);
-
-		$sqlScript .= "\n\n" . $row[1] . ";\n\n";
-
-
-		$query = "SELECT * FROM $table";
-		$result = mysqli_query($conn, $query);
-
-		$columnCount = mysqli_num_fields($result);
-
-    	// Prepare SQLscript for dumping data for each table
-		for ($i = 0; $i < $columnCount; $i ++) {
-			while ($row = mysqli_fetch_row($result)) {
-				$sqlScript .= "INSERT INTO $table VALUES(";
-				for ($j = 0; $j < $columnCount; $j ++) {
-					$row[$j] = $row[$j];
-
-					if (isset($row[$j])) {
-						$sqlScript .= '"' . $row[$j] . '"';
-					} else {
-						$sqlScript .= '""';
-					}
-					if ($j < ($columnCount - 1)) {
-						$sqlScript .= ',';
-					}
-				}
-				$sqlScript .= ");\n";
-			}
-		}
-
-		$sqlScript .= "\n"; 
-	}
-
-	if(!empty($sqlScript))
-	{
-    	// Save the SQL script to a backup file
-		$backup_file_name = $database_name . '_backup_' . time() . '.bak';
-		$fileHandler = fopen($backup_file_name, 'w+');
-		$number_of_lines = fwrite($fileHandler, $sqlScript);
-		fclose($fileHandler); 
-
-    	// Download the SQL backup file to the browser
-		header('Content-Description: File Transfer');
-		header('Content-Type: application/octet-stream');
-		header('Content-Disposition: attachment; filename=' . basename($backup_file_name));
-		header('Content-Transfer-Encoding: binary');
-		header('Expires: 0');
-		header('Cache-Control: must-revalidate');
-		header('Pragma: public');
-		header('Content-Length: ' . filesize($backup_file_name));
-		ob_clean();
-		flush();
-		readfile($backup_file_name);
-		exec('rm ' . $backup_file_name); 
-
-
-	}
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['DoBackup']) || !csrf_valid()) {
+    header('Location: ../../view/AdminUser/settings.php');
+    exit;
 }
-?>
 
+@set_time_limit(300);
+$conn = db();
+$dbName = env('DB_NAME', 'db_pms');
+$filename = $dbName . '_backup_' . date('Y-m-d_His') . '.sql';
 
-<html>
-    <head>
-        <meta http-equiv="Refresh" content="0;url=../../view/AdminUser/settings.php">
-        <title>Loading ...</title>
-    </head>
-    <body>
-    </body>
-</html>
+while (ob_get_level() > 0) {
+    ob_end_clean();
+}
+header('Content-Type: application/sql; charset=utf-8');
+header('Content-Disposition: attachment; filename="' . $filename . '"');
+header('Cache-Control: no-store');
+
+echo "-- Asiri Medical PMS backup\n-- Database: `$dbName`\n-- Created: " . date('Y-m-d H:i:s') . "\n\n";
+echo "SET NAMES utf8mb4;\nSET FOREIGN_KEY_CHECKS = 0;\n\n";
+
+$tables = $conn->query('SHOW TABLES');
+while ([$table] = $tables->fetch_row()) {
+    $create = $conn->query("SHOW CREATE TABLE `$table`")->fetch_row()[1];
+    echo "DROP TABLE IF EXISTS `$table`;\n$create;\n\n";
+
+    $rows = $conn->query("SELECT * FROM `$table`", MYSQLI_USE_RESULT);
+    while ($row = $rows->fetch_row()) {
+        $values = array_map(function ($v) use ($conn) {
+            return $v === null ? 'NULL' : "'" . $conn->real_escape_string($v) . "'";
+        }, $row);
+        echo "INSERT INTO `$table` VALUES (" . implode(',', $values) . ");\n";
+    }
+    $rows->free();
+    echo "\n";
+}
+
+echo "SET FOREIGN_KEY_CHECKS = 1;\n";
+exit;

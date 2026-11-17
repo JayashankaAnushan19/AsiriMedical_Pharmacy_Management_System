@@ -6,22 +6,44 @@ include('../../model/db_connection.php');
 
 <?php 
 
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
+$UID = (int) $_SESSION["UserId"];
+
+if (isset($_POST["btnChangeBasicInfo"])) {
+    if (!csrf_valid()) {
+        echo "<script>alert('Your session expired. Please try again.')</script>";
+    } elseif (db_exec(
+        "UPDATE `tb_adminuser` SET `user_Name` = ?, `user_Tel` = ?, `user_Address` = ? WHERE `user_ID` = ?",
+        [trim((string) $_POST['txtName']), trim((string) $_POST['txtTel']), trim((string) $_POST['txtAddress']), $UID],
+        'Profile Updated Successfully !!!'
+    )) {
+        $_SESSION['UserName'] = trim((string) $_POST['txtName']);
+    }
 }
 
+if (isset($_POST["btnChangePass"])) {
+    $current = (string) ($_POST["txtCurrentPass"] ?? '');
+    $new     = (string) ($_POST["txtNewPass"] ?? '');
+    $retype  = (string) ($_POST["txtReTypePass"] ?? '');
+    $row     = db_row("SELECT `user_Password` FROM `tb_adminuser` WHERE `user_ID` = ?", [$UID]);
 
-$Connection = setConnection();
+    if (!csrf_valid()) {
+        echo "<script>alert('Your session expired. Please try again.')</script>";
+    } elseif (!$row || !check_password($current, $row['user_Password'])) {
+        echo "<script>alert('Current password is incorrect.')</script>";
+    } elseif ($new !== $retype) {
+        echo "<script>alert('New passwords do not match.')</script>";
+    } elseif (strlen($new) < 6) {
+        echo "<script>alert('New password must be at least 6 characters.')</script>";
+    } else {
+        db_exec("UPDATE `tb_adminuser` SET `user_Password` = ? WHERE `user_ID` = ?", [hash_password($new), $UID],
+            'Password Updated Successfully !!!');
+    }
+}
 
-$UID = $_SESSION["UserId"];
+$record = db_row("SELECT * FROM `tb_adminuser` WHERE `user_ID` = ?", [$UID]);
 
-
-$myCoCommand = "SELECT * FROM `tb_adminuser` WHERE `user_ID` = '$UID' ";
-$myCmdResult=mysqli_query($Connection, $myCoCommand);
-
-if (mysqli_num_rows($myCmdResult)==1)
+if ($record)
 {
-    $record = mysqli_fetch_assoc($myCmdResult);
 
     $UserID = $record['user_ID'];
     $NIC = $record['user_NIC'];
@@ -30,7 +52,6 @@ if (mysqli_num_rows($myCmdResult)==1)
     $Address = $record['user_Address'];
     $URoll = $record['user_Role'];
     $UName = $record['user_Uname'];
-    $Pass = $record['user_Password'];
 
     if ($URoll == 0) {
         $URollName = "Super Admin";
@@ -47,83 +68,8 @@ if (mysqli_num_rows($myCmdResult)==1)
     else{
         $URollName = "No Authorization";
     }
-
-    // echo($UserID);
-    // echo "<br>";
-    // echo($NIC);
-    // echo "<br>";
-    // echo($Name);
-    // echo "<br>";
-    // echo($Tel);
-    // echo "<br>";
-    // echo($Address);
-    // echo "<br>";
-    // echo($URoll);
-    // echo "<br>";
-    // echo($URollName);
-    // echo "<br>";
-    // echo($UName);
-    // echo "<br>";
-    // echo($Pass);
 }
 
-
-if (isset($_POST["btnChangeBasicInfo"])) {
-    try{
-        runQuary("UPDATE `tb_adminuser` SET `user_Name`='$_POST[txtName]',`user_Tel`='$_POST[txtTel]',`user_Address`='$_POST[txtAddress]' WHERE `user_ID` = '$_SESSION[UserId]'","Profile Updated Successfully !!!");
-        ?>
-        <html>
-        <head>
-            <meta http-equiv="Refresh" content="0;url=profile.php">
-            <title>Loading ...</title>
-        </head>
-        <body>
-        </body>
-        </html>
-        <?php
-
-    }
-    catch(Exception $e) {
-        echo "<script type='text/javascript'>alert('Error Occured. Please contact system Admin.')</script>";
-    }
-
-}
-if (isset($_POST["btnChangePass"])) {
-
-    $myCoCommand = "SELECT * FROM `tb_adminuser` WHERE `user_ID` = '$_SESSION[UserId]' ";
-    $myCmdResult=mysqli_query($Connection, $myCoCommand);
-
-    if (mysqli_num_rows($myCmdResult)==1)
-    {
-        $record = mysqli_fetch_assoc($myCmdResult);
-
-        $UserPass = $record['user_Password'];
-    }
-
-    if ($UserPass == $_POST["txtCurrentPass"] && $_POST["txtNewPass"] == $_POST["txtReTypePass"] && !empty($_POST["txtNewPass"]) && !empty($_POST["txtReTypePass"])) {
-        try{
-            runQuary("UPDATE `tb_adminuser` SET `user_Password`='$_POST[txtNewPass]' WHERE `user_ID` = '$_SESSION[UserId]'","Password Updated Successfully !!!");
-
-            ?>
-            <html>
-            <head>
-                <meta http-equiv="Refresh" content="0;url=profile.php">
-                <title>Loading ...</title>
-            </head>
-            <body>
-            </body>
-            </html>
-            <?php
-
-        }
-        catch(Exception $e) {
-            echo "<script type='text/javascript'>alert('Error Occured. Please contact system Admin.')</script>";
-        }
-    }
-    else{
-        echo "<script type='text/javascript'>alert('Passwords Not Matching. Cannot Update Password.')</script>";
-    }
-}
 
 ?>
 
@@ -138,18 +84,19 @@ if (isset($_POST["btnChangePass"])) {
             <p class="text-primary m-0 font-weight-bold">Basic Settings</p>
         </div>
         <div class="card-body py">
-            <form action="#" method="POST">
+            <form action="profile.php" method="POST">
+                <?= csrf_field() ?>
                 <div class="form-row">
                     <div class="col">
                         <div class="form-group">
                             <label for="txtUserID"><strong>User ID</strong></label>
-                            <input class="form-control form-control-sm" type="text" placeholder="User ID" value="<?php echo (!empty($UserID)) ? $UserID : ''; ?>" name="txtUserID" disabled>
+                            <input class="form-control form-control-sm" type="text" placeholder="User ID" value="<?php echo e($UserID ?? ''); ?>" name="txtUserID" disabled>
                         </div>
                     </div>
                     <div class="col">
                         <div class="form-group">
                             <label for="txtUserNIC"><strong>NIC</strong></label>
-                            <input class="form-control form-control-sm" type="text" placeholder="NIC" value="<?php echo (!empty($NIC)) ? $NIC : ''; ?>" name="txtUserNIC" disabled>
+                            <input class="form-control form-control-sm" type="text" placeholder="NIC" value="<?php echo e($NIC ?? ''); ?>" name="txtUserNIC" disabled>
                         </div>
                     </div>
                 </div>
@@ -157,19 +104,19 @@ if (isset($_POST["btnChangePass"])) {
                     <div class="col">
                         <div class="form-group">
                             <label for="txtName"><strong>Name</strong></label>
-                            <input class="form-control form-control-sm" type="text" placeholder="Name" value="<?php echo (!empty($Name)) ? $Name : ''; ?>" name="txtName">
+                            <input class="form-control form-control-sm" type="text" placeholder="Name" value="<?php echo e($Name ?? ''); ?>" name="txtName">
                         </div>
                     </div>
                     <div class="col">
                         <div class="form-group">
                             <label for="txtTel"><strong>Telephone</strong></label>
-                            <input class="form-control form-control-sm" type="tel" pattern="[0-9]{10}" title="Ex: 0712345678" placeholder="Telephone" value="<?php echo (!empty($Tel)) ? $Tel : ''; ?>" name="txtTel">
+                            <input class="form-control form-control-sm" type="tel" pattern="[0-9]{10}" title="Ex: 0712345678" placeholder="Telephone" value="<?php echo e($Tel ?? ''); ?>" name="txtTel">
                         </div>
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="txtAddress"><strong>Address</strong></label>
-                    <input class="form-control form-control-sm" type="text" placeholder="Sunset Blvd, 38" value="<?php echo (!empty($Address)) ? $Address : ''; ?>" name="txtAddress">
+                    <input class="form-control form-control-sm" type="text" placeholder="Sunset Blvd, 38" value="<?php echo e($Address ?? ''); ?>" name="txtAddress">
                 </div>
                 <div class="form-group">
                     <button class="btn btn-warning btn-sm" type="submit" id="btnChangeBasicInfo" name="btnChangeBasicInfo">Update&nbsp;Settings</button>
@@ -187,13 +134,13 @@ if (isset($_POST["btnChangePass"])) {
                 <div class="col">
                     <div class="form-group">
                         <label for="txtUserRoll"><strong>User Roll</strong></label>
-                        <input class="form-control form-control-sm" type="text" placeholder="Los Angeles" value="<?php echo (!empty($URollName)) ? $URollName : ''; ?>" name="txtUserRoll" disabled>
+                        <input class="form-control form-control-sm" type="text" placeholder="Los Angeles" value="<?php echo e($URollName ?? ''); ?>" name="txtUserRoll" disabled>
                     </div>
                 </div>
                 <div class="col">
                     <div class="form-group">
                         <label for="txtUserName"><strong>User Name</strong></label>
-                        <input class="form-control form-control-sm" type="text" placeholder="USA" value="<?php echo (!empty($UName)) ? $UName : ''; ?>" name="txtUserName" disabled>
+                        <input class="form-control form-control-sm" type="text" placeholder="USA" value="<?php echo e($UName ?? ''); ?>" name="txtUserName" disabled>
                     </div>
                 </div>
             </div>
@@ -209,12 +156,13 @@ if (isset($_POST["btnChangePass"])) {
             
         </div>
         <div class="card-body">
-            <form action="#" method="POST">
+            <form action="profile.php" method="POST">
+                <?= csrf_field() ?>
                 <div class="form-row">
                     <div class="col">
                         <div class="form-group">
                             <label for="txtCurrentPass"><strong>Current Password</strong></label>
-                            <input class="form-control form-control-sm" type="Password" placeholder="Current Password" value="<?php echo (!empty($Pass)) ? $Pass : ''; ?>" id="txtCurrentPass" name="txtCurrentPass">
+                            <input class="form-control form-control-sm" type="Password" placeholder="Current Password" value="" autocomplete="current-password" id="txtCurrentPass" name="txtCurrentPass">
                         </div>
                     </div>
                     <div class="col">
@@ -241,7 +189,7 @@ if (isset($_POST["btnChangePass"])) {
                     </div>
                 </div>
                 <div class="form-group">
-                    <button class="btn btn-warning btn-sm" id="btnChangePassCancel" onclick="changePassCancel()">Cancel</button> 
+                    <button type="button" class="btn btn-warning btn-sm" id="btnChangePassCancel" onclick="changePassCancel()">Cancel</button> 
                     <button class="btn btn-primary btn-sm" id="btnChangePass" type="submit" name="btnChangePass">Change&nbsp;Password</button>
                 </div>
             </form>

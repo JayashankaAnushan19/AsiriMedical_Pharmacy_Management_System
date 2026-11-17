@@ -43,9 +43,11 @@ It has a back office for pharmacy staff (point of sale, stock, purchasing, retur
 3. The browser opens at **http://localhost:8000/**.
 
 `RUN.bat` will:
+- create `.env` from `.env.example` on the first run,
 - start XAMPP's MySQL if it is not already running,
 - create the `db_pms` database from `model/db_pms.sql` on the first run (later runs keep your data),
-- serve the project with XAMPP's PHP on port 8000.
+- apply any new database migrations (`model/migrate.php`),
+- serve the project with XAMPP's PHP on port 8000, using the same access rules as `.htaccess`.
 
 Close the `RUN.bat` window to stop the website. Run **`STOP.bat`** to stop MySQL.
 
@@ -60,15 +62,39 @@ If XAMPP is installed somewhere else, or port 8000 is taken, edit `XAMPP=` / `PO
 | `keep`  | `1234` | Storekeeper |
 | `cash`  | `1234` | Cashier |
 
-> Change these before using the system with real data.
+> Passwords are stored as bcrypt hashes. Change these demo passwords (Profile → Change Password) before using real data.
 
-### Manual setup (Apache instead of RUN.bat)
+### Manual setup (Apache / shared hosting)
 
-1. Copy the project to `C:\xampp\htdocs\AsiriMedicalPM`.
-2. In phpMyAdmin, create a database named `db_pms` and import `model/db_pms.sql`.
-3. Open `http://localhost/AsiriMedicalPM/`.
+1. Upload or copy the project, for example to `C:\xampp\htdocs\AsiriMedicalPM`.
+2. Create a MySQL database and import `model/db_pms.sql`.
+3. Copy `.env.example` to `.env` and set `DB_HOST`, `DB_NAME`, `DB_USER` and `DB_PASS`. Keep `APP_DEBUG=false`.
+4. Run the migrations:
+   - with SSH: `php model/migrate.php`
+   - without SSH: set `MIGRATE_TOKEN` in `.env`, open `/model/migrate.php?token=<value>` once, then clear the token.
+5. Open the site. `.htaccess` blocks access to `.env`, `model/`, SQL files and backups, and `.user.ini` sets the PHP options for PHP-FPM hosts.
 
-On PHP 8.1+, add `mysqli_report(MYSQLI_REPORT_OFF);` to the top of `model/db_connection.php`, or set `auto_prepend_file` to `_launcher/prepend.php`. Otherwise a failed query stops the page with an exception.
+## Configuration
+
+All settings live in `.env`, or in real environment variables, which take priority. See `.env.example`.
+
+| Key | Default | Purpose |
+|---|---|---|
+| `APP_DEBUG` | `false` | Show PHP errors in the page (local only) |
+| `APP_TIMEZONE` | `Asia/Colombo` | Dates on invoices and reports |
+| `DB_HOST` / `DB_PORT` | `127.0.0.1` / `3306` | Database server |
+| `DB_NAME` / `DB_USER` / `DB_PASS` | `db_pms` / `root` / *(empty)* | Database credentials |
+| `MIGRATE_TOKEN` | *(empty)* | Enables the web migration runner while set |
+
+## Security
+
+- Staff passwords are hashed with `password_hash`. Old plain-text passwords are upgraded automatically.
+- Every staff page and handler requires login, and access is checked per role (`model/auth.php`).
+- Only a Super Admin can create, edit or delete Super Admin accounts.
+- Login, user management, profile and backup forms are protected with CSRF tokens.
+- Sessions are regenerated on login and use `HttpOnly` / `SameSite=Lax` cookies (`Secure` on HTTPS).
+- Database backups download directly and are never stored on the server.
+- PHP files can't run from the product image upload folder.
 
 ---
 
@@ -77,9 +103,16 @@ On PHP 8.1+, add `mysqli_report(MYSQLI_REPORT_OFF);` to the top of `model/db_con
 ```
 ├── index.html              Public landing page
 ├── RUN.bat / STOP.bat      One-click launcher (XAMPP)
-├── _launcher/              Launcher helpers (PHP 8 compatibility, logs)
+├── .env.example            Configuration template (copy to .env)
+├── .htaccess / .user.ini   Apache access rules and PHP settings
+├── _launcher/              Built-in server router and logs (used by RUN.bat)
 ├── model/
-│   ├── db_connection.php   Database connection (root / no password / db_pms)
+│   ├── bootstrap.php       Config, errors, sessions, CSRF, e() escaping
+│   ├── db.php              Database layer (db_query, db_row, db_all, db_exec)
+│   ├── db_connection.php   Legacy include, loads db.php
+│   ├── auth.php            Staff login, password hashing, role checks
+│   ├── migrate.php         Migration runner
+│   ├── migrations/         Schema and data upgrades
 │   └── db_pms.sql          Database schema and sample data
 ├── view/
 │   ├── AdminUser/          Back-office pages (POS, products, stock, reports…)
@@ -109,14 +142,22 @@ On PHP 8.1+, add `mysqli_report(MYSQLI_REPORT_OFF);` to the top of `model/db_con
 - [ ] Customer accounts: the login and sign-up pages are mock-ups with no customer table yet. The shop works as guest checkout.
 - [ ] Product image upload: real size and type validation, and allow updates without a new image
 
-**Security** (needed before any online deployment)
-- [ ] Prepared statements for all SQL queries (prevent SQL injection)
-- [ ] Hash passwords (`password_hash` / `password_verify`)
-- [ ] Move secrets and database credentials to a config file outside the web root
-- [ ] Keep database backups outside the web root
+**Phase 1: Foundation** ✅
+- [x] Central config (`.env`) and one database layer with prepared-statement helpers (`model/db.php`)
+- [x] Hashed passwords, secure login and logout, role-based access on every page and handler
+- [x] Database migrations (`model/migrate.php`)
+- [x] Streamed backups (nothing stored in the web root), `.htaccess` / router access rules
+- [x] Removed test files and the mock customer login and sign-up pages
 
-**Clean-up**
-- [ ] Remove test and experiment files (`view/test*.html`, `printTest*.php`, `Test_ImageUpload*`)
+**Phase 2: SQL injection**
+- [ ] Convert the remaining queries in views and handlers to prepared statements
+
+**Phase 3: XSS and CSRF**
+- [ ] Escape all output and add CSRF tokens to the remaining forms
+
+**Phase 4: Deployment**
+- [ ] Product image upload: real size and type validation, and allow updates without a new image
+- [ ] Docker (`Dockerfile` + `docker-compose.yml`)
 - [ ] Remove leftover debug alerts
 
 ---

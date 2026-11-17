@@ -13,6 +13,7 @@
         </div>
         <div class="card-body shadow">
             <form action="../../control/AdminUser/manageUsers.php" method="post">
+                <?= csrf_field() ?>
                 <div class="form-row">
                     <div class="col">
                         <div>
@@ -59,7 +60,7 @@
                                         <div class="col">
                                             <div class="form-group"><label for="txtPassword"><strong>Password</strong></label>
                                                 <div class="form-inline">
-                                                    <input class="form-control" type="password" placeholder="" id="txtPassword" name="txtPassword" required>
+                                                    <input class="form-control" type="password" placeholder="Leave blank to keep current" id="txtPassword" name="txtPassword" autocomplete="new-password">
                                                     &nbsp;&nbsp;
                                                     <input style="float: right;" type="checkbox" onclick="showHidePassword()"> &nbsp; Show Password
                                                 </div>
@@ -212,15 +213,15 @@
 
                                             $n += 1;
                                             if ($n<6) {
-                                                $table.='<tr id="'.$Id.'">';
-                                                $table.='<td>'.$Id.'</td>';
-                                                $table.='<td>'.$NIC.'</td>';
-                                                $table.='<td>'.$Name.'</td>';
-                                                $table.='<td>'.$Tel.'</td>';
-                                                $table.='<td>'.$Address.'</td>';
-                                                $table.='<td hidden>'.$UName.'</td>';
-                                                $table.='<td hidden>'.$Password.'</td>';
-                                                $table.='<td hidden>'.$UsrRole.'</td>';
+                                                $table.='<tr id="'.(int)$Id.'">';
+                                                $table.='<td>'.(int)$Id.'</td>';
+                                                $table.='<td>'.e($NIC).'</td>';
+                                                $table.='<td>'.e($Name).'</td>';
+                                                $table.='<td>'.e($Tel).'</td>';
+                                                $table.='<td>'.e($Address).'</td>';
+                                                $table.='<td hidden>'.e($UName).'</td>';
+                                                $table.='<td hidden></td>';
+                                                $table.='<td hidden>'.e($UsrRole).'</td>';
                                                 if ($UsrRole == 0) {
                                                     $URolename = "Super Admin";
                                                 }
@@ -241,15 +242,15 @@
                                 ////
                                             }
                                             else{
-                                                $table.='<tr id="'.$Id.'" style="display:none;">';
-                                                $table.='<td>'.$Id.'</td>';
-                                                $table.='<td>'.$NIC.'</td>';
-                                                $table.='<td>'.$Name.'</td>';
-                                                $table.='<td>'.$Tel.'</td>';
-                                                $table.='<td>'.$Address.'</td>';
-                                                $table.='<td hidden>'.$UName.'</td>';
-                                                $table.='<td hidden>'.$Password.'</td>';
-                                                $table.='<td hidden>'.$UsrRole.'</td>';
+                                                $table.='<tr id="'.(int)$Id.'" style="display:none;">';
+                                                $table.='<td>'.(int)$Id.'</td>';
+                                                $table.='<td>'.e($NIC).'</td>';
+                                                $table.='<td>'.e($Name).'</td>';
+                                                $table.='<td>'.e($Tel).'</td>';
+                                                $table.='<td>'.e($Address).'</td>';
+                                                $table.='<td hidden>'.e($UName).'</td>';
+                                                $table.='<td hidden></td>';
+                                                $table.='<td hidden>'.e($UsrRole).'</td>';
                                                 if ($UsrRole == 0) {
                                                     $URolename = "Super Admin";
                                                 }
@@ -327,14 +328,14 @@
         var newRow = row + 1;
         table = document.getElementById("mainUserDataTable");
         tr = table.getElementsByTagName("tr");
-        document.getElementById("txtUserID").value =  tr[newRow].getElementsByTagName("td")[0].innerHTML;
-        document.getElementById("txtUserName").value =  tr[newRow].getElementsByTagName("td")[2].innerHTML;
-        document.getElementById("txtNICNumber").value =  tr[newRow].getElementsByTagName("td")[1].innerHTML;
-        document.getElementById("txtUserAddress").value =  tr[newRow].getElementsByTagName("td")[4].innerHTML;
-        document.getElementById("txtUserTel").value =  tr[newRow].getElementsByTagName("td")[3].innerHTML;
-        document.getElementById("txtUserUName").value =  tr[newRow].getElementsByTagName("td")[5].innerHTML;
-        document.getElementById("txtPassword").value =  tr[newRow].getElementsByTagName("td")[6].innerHTML;
-        document.getElementById("txtUserRole").value =  tr[newRow].getElementsByTagName("td")[7].innerHTML;
+        document.getElementById("txtUserID").value =  tr[newRow].getElementsByTagName("td")[0].textContent;
+        document.getElementById("txtUserName").value =  tr[newRow].getElementsByTagName("td")[2].textContent;
+        document.getElementById("txtNICNumber").value =  tr[newRow].getElementsByTagName("td")[1].textContent;
+        document.getElementById("txtUserAddress").value =  tr[newRow].getElementsByTagName("td")[4].textContent;
+        document.getElementById("txtUserTel").value =  tr[newRow].getElementsByTagName("td")[3].textContent;
+        document.getElementById("txtUserUName").value =  tr[newRow].getElementsByTagName("td")[5].textContent;
+        document.getElementById("txtPassword").value =  tr[newRow].getElementsByTagName("td")[6].textContent;
+        document.getElementById("txtUserRole").value =  tr[newRow].getElementsByTagName("td")[7].textContent;
 
         document.getElementById("msgForUser").hidden = true;
 
@@ -410,14 +411,14 @@ function myUserDeleteFunction(gh){
         var newRow = row + 1;
         table = document.getElementById("mainUserDataTable");
         tr = table.getElementsByTagName("tr");
-        document.getElementById("txtUserID").value =  tr[newRow].getElementsByTagName("td")[0].innerHTML;
-        document.getElementById("txtUserName").value =  tr[newRow].getElementsByTagName("td")[2].innerHTML;
-        document.getElementById("txtNICNumber").value =  tr[newRow].getElementsByTagName("td")[1].innerHTML;
-        document.getElementById("txtUserAddress").value =  tr[newRow].getElementsByTagName("td")[4].innerHTML;
-        document.getElementById("txtUserTel").value =  tr[newRow].getElementsByTagName("td")[3].innerHTML;
-        document.getElementById("txtUserUName").value =  tr[newRow].getElementsByTagName("td")[5].innerHTML;
-        document.getElementById("txtPassword").value =  tr[newRow].getElementsByTagName("td")[6].innerHTML;
-        document.getElementById("txtUserRole").value =  tr[newRow].getElementsByTagName("td")[7].innerHTML;
+        document.getElementById("txtUserID").value =  tr[newRow].getElementsByTagName("td")[0].textContent;
+        document.getElementById("txtUserName").value =  tr[newRow].getElementsByTagName("td")[2].textContent;
+        document.getElementById("txtNICNumber").value =  tr[newRow].getElementsByTagName("td")[1].textContent;
+        document.getElementById("txtUserAddress").value =  tr[newRow].getElementsByTagName("td")[4].textContent;
+        document.getElementById("txtUserTel").value =  tr[newRow].getElementsByTagName("td")[3].textContent;
+        document.getElementById("txtUserUName").value =  tr[newRow].getElementsByTagName("td")[5].textContent;
+        document.getElementById("txtPassword").value =  tr[newRow].getElementsByTagName("td")[6].textContent;
+        document.getElementById("txtUserRole").value =  tr[newRow].getElementsByTagName("td")[7].textContent;
 
         document.getElementById("msgForUser").hidden = false;
         document.getElementById("msgForUser").innerHTML = "Do you want to Delete this Company?";

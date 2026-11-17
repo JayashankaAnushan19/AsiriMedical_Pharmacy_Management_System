@@ -1,19 +1,10 @@
-<?php 
-
-if (!session_start()) {
-    session_start();
-}
-if ($_SESSION["UserId"] == "") {
-    header("location: ../../view/AdminUser/Adminlogin.php");
-}
-if (!isset($_SESSION["UserId"])) {
-    session_destroy();
-    header("location: Adminlogin.php");
-    exit();
-}
+<?php
+require_once __DIR__ . '/../../../model/auth.php';
+require_staff();
 ?>
-
-<htmld>
+<!DOCTYPE html>
+<html>
+<head>
     <title>PMS-Sotuion</title>
 
     <link rel = "icon" href ="../../assets/img/pmslogo.png" type = "image/x-icon"> 
@@ -246,13 +237,8 @@ if (!isset($_SESSION["UserId"])) {
 
                                 <?php 
 
-                                $servername="127.0.0.1"; //127.0.0.1
-                                $username="root";
-                                $password="";
-                                $database="db_pms";
+                                $conn = db();
 
-                                $conn = new mysqli($servername,$username,$password,$database);
-                                
                                 $prdctIds = "SELECT * FROM `tb_product`";
                                 $prdctIdsResult = mysqli_query($conn, $prdctIds);
                                 $n = 0;
@@ -520,7 +506,7 @@ if (!isset($_SESSION["UserId"])) {
                         <li class="nav-item dropdown no-arrow" role="presentation">
                             <div class="nav-item dropdown no-arrow">
                                 <a class="dropdown-toggle nav-link" data-toggle="dropdown" aria-expanded="false" href="#">
-                                    <span class="d-none d-lg-inline mr-2 text-gray small" style="color: black;"><?php echo $_SESSION["UserName"]; ?></span>
+                                    <span class="d-none d-lg-inline mr-2 text-gray small" style="color: black;"><?php echo e($_SESSION["UserName"]); ?></span>
                                     <img class="border rounded-circle img-profile" src="../../assets/img/Davatar.jpg">
                                 </a>
                                 <div class="dropdown-menu shadow dropdown-menu-right animated--grow-in" role="menu">
