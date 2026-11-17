@@ -1,0 +1,22 @@
+# ---- Runtime logs (created by RUN.bat) ----
+_launcher/logs/
+*.log
+
+# ---- Database backups made by Settings > Backup (contain real data) ----
+control/AdminUser/db_pms_backup_*
+*.bak
+
+# ---- Local config overrides ----
+.env
+*.local.php
+
+# ---- Editors / IDEs ----
+.vscode/
+.idea/
+*.sublime-*
+*.swp
+
+# ---- OS files ----
+Thumbs.db
+desktop.ini
+.DS_Store

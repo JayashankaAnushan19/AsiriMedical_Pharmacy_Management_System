@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+</head>
+<body>
+    <center>    
+<form action="#" method="POST">
+    <table >
+        <tr >
+            <td colspan="2"><center>Admin Log</center></td>
+        </tr>
+        <tr>
+            <td>email</td>
+            <td>
+                <input type="text" id="emails" name="emails">
+            </td>
+        </tr>
+        <tr>
+            <td>password</td>
+            <td>
+                <input type="password" id="passwords" name="passwords">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <center>
+                    <input type="button" onclick="validTestt();" name="log" value="Login">
+                </center>
+            </td>
+            <td>
+                <center>
+                    <input type="button" onclick="resett();" name="reset" value="Reset">
+                </center>
+            </td>
+        </tr>
+    </table>
+</form>
+</center>
+
+
+</body>
+
+
+<script>
+    
+
+    function validTestt() {
+        // alert("Valid test function working");
+
+        var x = document.getElementById("emails").value;
+        var y = document.getElementById("passwords").value;
+
+        if (x == "") {
+            alert("Enter User Name.");
+        }
+        else if (y == "") {
+            alert("Enter Password.");
+        }
+        else
+        {
+            alert("Logging Success");
+        }
+    }
+    function resett(){
+        // alert("Reset function working");
+
+        var x = document.getElementById("emails");
+        var y = document.getElementById("passwords");
+
+        x =" ";
+        y = " ";
+    }
+</script>
+
+</html>
